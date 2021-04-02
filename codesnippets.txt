@@ -1,0 +1,401 @@
+======================================
+#1 index.html (at top beneath <title>)
+======================================
+
+<!-- PWA related meta tags -->
+<!-- sets the width of the browsers viewport to the device width -->
+<meta  name="viewport"  content="width=device-width, initial-scale=1.0">
+
+<!-- Add to home screen for Safari on iOS -->
+<!-- Hide Tabs and adress bar -->
+<meta  name="apple-mobile-web-app-capable"  content="yes">
+<!-- hide status bar -->
+<meta  name="apple-mobile-web-app-status-bar-style"  content="black">
+<meta  name="apple-mobile-web-app-title"  content="Consultant Profile">
+
+<!-- Windows related -->
+<meta  name="msapplication-TileImage"  content="webapp/icons/mstile-150x150.png">
+<meta  name="msapplication-TileColor"  content="#427CAC">
+
+<!-- Statusbar Color for Chrome, Firefox OS and Opera -->
+<meta  name="theme-color"  content="#427CAC">
+
+<!-- Icons -->
+<!-- different browsers use different link tag for application icon which is used as homescreen icon as well -->
+<link  rel="icon"  href="webapp/icons/favicon.ico?"  type="image/x-icon">
+<link  rel="icon"  type="image/png"  sizes="32x32"  href="webapp/icons/favicon-32x32.png">
+<link  rel="icon"  type="image/png"  sizes="16x16"  href="webapp/icons/favicon-16x16.png">
+<link  rel="apple-touch-icon"  href="webapp/icons/apple-touch-icon.png">
+<link  rel="mask-icon"  href="webapp/icons/safari-pinned-tab.svg"  color="#5bbad5">
+
+
+====================================================
+#2 index.html (beneath the other block of meta tags)
+====================================================
+
+<!-- PWA manifest -->
+<link  rel="manifest"  href="webapp/manifest.json">
+
+
+==========================================================
+#3 webapp/manifest.json (copy directly beneath “_version”)
+==========================================================
+
+"name": "PWA SAPUI5 Profile - Helmut Tammen",
+"name": "PWA SAPUI5 Profile - Helmut Tammen",
+"short_name": "Consultant Profile",
+"icons": [
+	{
+		"src": "icons/icon-128x128.png",
+		"sizes": "128x128",
+		"type": "image/png"
+	},
+	{
+		"src": "icons/icon-144x144.png",
+		"sizes": "144x144",
+		"type": "image/png"
+	},
+	{
+		"src": "icons/icon-152x152.png",
+		"sizes": "152x152",
+		"type": "image/png"
+	},
+	{
+		"src": "icons/icon-192x192.png",
+		"sizes": "192x192",
+		"type": "image/png"
+	},
+	{
+		"src": "icons/icon-256x256.png",
+		"sizes": "256x256",
+		"type": "image/png"
+	},
+	{
+		"src": "icons/icon-512x512.png",
+		"sizes": "512x512",
+		"type": "image/png"
+	}
+],
+"start_url": "../index.html",
+"display": "standalone",
+"background_color": "#FFFFFF",
+"theme_color": "#427CAC",
+
+
+=============================
+#4 index.html (ui5 bootstrap)
+=============================
+
+<script id="sap-ui-bootstrap"
+	src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js"
+----------------------------------------->
+  data-sap-ui-libs="sap.m, sap.ui.layout, sap.ui.core, sap.uxap"
+<-----------------------------------------
+	data-sap-ui-theme="sap_belize"
+	data-sap-ui-compatVersion="edge"
+----------------------------------------->
+	data-sap-ui-preload="async"
+<-----------------------------------------
+	data-sap-ui-language=”en”
+	data-sap-ui-resourceroots='{"de.tammenit.ui5.homepage": "webapp"}'>
+</script>
+
+
+=============================
+#5 index.html (ui5 bootstrap)
+=============================
+
+<script id="sap-ui-bootstrap"
+	src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js"
+	data-sap-ui-libs="sap.m, sap.ui.layout, sap.ui.core, sap.uxap"
+	data-sap-ui-theme="sap_belize"
+----------------------------------------->  
+	data-sap-ui-xx-waitForTheme="true"
+<-----------------------------------------
+	data-sap-ui-compatVersion="edge"
+	data-sap-ui-preload="async"
+	data-sap-ui-language=”en”
+	data-sap-ui-resourceroots='{"de.tammenit.ui5.homepage": "webapp"}'>
+</script>
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Check the app so far
+- Manifest
+- Library preload
+- Favicon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+==========================================
+#6 index.html (right before ui5 bootstrap)
+==========================================
+
+<!-- Register service worker -->
+<script src="register-worker.js"></script>
+
+
+===============================================
+#7 register-worker.js (new file in root folder)
+===============================================
+
+/**
+ * Register the service worker
+ */
+if ('serviceWorker' in navigator) {
+	// load serviceworker after page has been loaded. This ensures a best first-visit
+	// experience.
+	// see here for details:
+	// https://developers.google.com/web/fundamentals/primers/service-workers/registration
+	window.addEventListener('load', function () {
+		navigator.serviceWorker
+			.register('./service-worker.js')
+			.then(function () {
+				console.log('Service Worker Registered');
+			}).catch(function (error) {
+				console.log('Service Worker Registration failed');
+				console.log(error);
+			});
+	});
+}
+
+
+==============================================
+#8 service-worker.js (new file in root folder)
+==============================================
+
+let CACHE_NAME = 'ui5-consultantprofile-pwa-v1.0.0';
+// Stated in this blog https://www.captechconsulting.com/blogs/my-experience-using-service-workers from 07/16 (maybe old)
+// It’s important to note here that the root is required when adding assets to the cache in the Install Event. 
+// If excluded, the code in the next section, Service Worker Fetch Event, will produce an error.
+let RESOURCES_TO_PRELOAD = [
+  '/',
+  'index.html',
+  'webapp/Component-preload.js',
+  'register-worker.js',
+  'webapp/css/style.css',
+  'webapp/manifest.json',
+  'webapp/manifest.json?sap-language=DE',
+  'webapp/manifest.json?sap-language=EN',
+  'webapp/model/pdfs.json',
+  'webapp/model/profile.json',
+  'webapp/icons/favicon-16x16.png',
+  'webapp/icons/favicon-32x32.png',
+  'webapp/images/helmut2.png',
+  'webapp/images/Helmut_2_1.jpg',
+  'webapp/images/helmut_gruen.jpg',
+  'webapp/images/helmut_sdn3.jpg',
+  'webapp/images/Twitter.png',
+  'webapp/images/Twitter@2.png',
+  'webapp/images/linkedin.png',
+  'webapp/images/linkedin@2.png',
+  'webapp/images/cancel.svg'
+];
+
+//Preload UI5 core and libraries by install
+const cdnBase = 'https://openui5.hana.ondemand.com/resources/';
+RESOURCES_TO_PRELOAD = RESOURCES_TO_PRELOAD.concat([
+  `${cdnBase}sap-ui-core.js`,
+  `${cdnBase}sap/ui/core/library-preload.js`,
+  `${cdnBase}sap/ui/core/messagebundle.properties`,
+  `${cdnBase}sap/ui/core/messagebundle_de.properties`,
+  `${cdnBase}sap/ui/core/messagebundle_en.properties`,
+  `${cdnBase}sap/ui/core/themes/sap_belize/library.css`,
+  `${cdnBase}sap/ui/core/themes/base/fonts/SAP-icons.woff2`,
+  `${cdnBase}sap/ui/core/themes/sap_belize/fonts/72-Bold.woff2`,
+  `${cdnBase}sap/ui/core/themes/sap_belize/fonts/72-Regular.woff2`,
+  `${cdnBase}sap/m/library-preload.js`,
+  `${cdnBase}sap/m/messagebundle_de.properties`,
+  `${cdnBase}sap/m/messagebundle_en.properties`,
+  `${cdnBase}sap/m/themes/sap_belize/library.css`,
+  `${cdnBase}sap/ui/layout/messagebundle.properties`,
+  `${cdnBase}sap/ui/layout/messagebundle_de.properties`,
+  `${cdnBase}sap/ui/layout/messagebundle_en.properties`,
+  `${cdnBase}sap/ui/layout/library-preload.js`,
+  `${cdnBase}sap/ui/layout/themes/sap_belize/library.css`,
+  `${cdnBase}sap/uxap/library-preload.js`,
+  `${cdnBase}sap/uxap/themes/sap_belize/library.css`
+]);
+
+// Preload some resources during install
+self.addEventListener('install', function (event) {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(function (cache) {
+      return cache.addAll(RESOURCES_TO_PRELOAD);
+    })
+  );
+});
+
+// Delete obsolete caches during activate
+self.addEventListener('activate', function (event) {
+  event.waitUntil(
+    caches.keys().then(function (keyList) {
+      return Promise.all(keyList.map(function (key) {
+        if (key !== CACHE_NAME) {
+          return caches.delete(key);
+        }
+      }));
+    })
+  );
+});
+
+// During runtime, get files from cache or -> fetch, then save to cache
+self.addEventListener('fetch', function (event) {
+  event.respondWith(
+    caches.match(event.request).then(function (response) {
+      if (response) {
+        return response; // There is a cached version of the resource already
+      }
+
+      let requestCopy = event.request.clone();
+      return fetch(requestCopy).then(function (response) {
+        if (!response) {
+          return response;
+        }
+        // If a resource is retrieved, save a copy to the cache.
+        // Unfortunately, it is not possible to check if the response form CDN
+        // was successful (responses with type === 'opaque' have zero status). 
+        // For example, a 404 CDN error will be cached, too.
+        if (response.status === 200 || response.type === 'opaque') {
+          if(!event.request.url.startsWith("chrome-extension://")) {
+            let responseCopy = response.clone();
+            caches.open(CACHE_NAME).then(function (cache) {
+              cache.put(event.request, responseCopy);
+            });
+          }
+        }
+        return response;
+      });
+    }).catch( function() {
+      var req = event.request;
+      return caches.match('/webapp/images/cancel.svg');
+    })
+  );
+});
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test the app
+- Go offline
+- Activate iPhone Mode
+- Get errors when clicking on tile
+--> UI5 fixes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+=============================================
+#9 ModulePreload.js (new file in root folder)
+=============================================
+
+(function() {
+  
+  var ModulePreload = function() {
+    this.sModulePath = undefined;
+    this.moduleName = undefined;
+  };
+
+  /**
+  * Loads a resource to the preload cache of openui5
+  * @param {String} library - library to load the resource from
+  * @param {String} resource - rescoure to load from the library
+  * @param {boolean} json - if true the resource is json file. 
+  *        This needs to be stringified before adding it to the cache
+  * @param {String} dataType - jQuery dataType
+  */
+  ModulePreload.prototype.preloadModule = function(library, resource, json, dataType) {
+    let sModulePath = jQuery.sap.getModulePath(library, resource);
+    this.moduleName = library + resource;
+    jQuery.get(sModulePath, function (data, textStatus, jqXHR) {
+      if(json) {
+        data = JSON.stringify(data);
+      }
+      var oData = {
+        name: "de.tammenit.ui5.thirdparty",
+        modules: {
+        },
+        version: "2.0"
+      };
+      oData.modules[this.moduleName] = data;
+      jQuery.sap.registerPreloadedModules(oData);
+    }.bind(this), dataType);
+  } 
+  // add the ModulePreload class to the global window object
+  window.MyModulePreload = ModulePreload;
+
+})();
+
+
+
+==================================================================
+#10 index.html (after register-worker.js and before UI5 bootstrap)
+==================================================================
+
+<script src="ModulePreload.js"></script>
+
+======================================================
+#10.1 service-worker.js (somewhere in the first block)
+======================================================
+  'ModulePreload.js',
+
+=======================================================
+#10.2 service-worker.js (at the end of the second block)
+=======================================================
+  `${cdnBase}sap/uxap/i18n/i18n.properties`,
+  `${cdnBase}sap/uxap/i18n/i18n_en.properties`,
+  `${cdnBase}sap/uxap/i18n/i18n_de.properties`,
+  `${cdnBase}sap/ui/core/cldr/de.json`,
+  `${cdnBase}sap/ui/core/cldr/en.json`,
+  `${cdnBase}sap-ui-version.json`,
+  `${cdnBase}sap/ui/thirdparty/zyngascroll.js`
+
+
+=====================================================
+#10.3 index.html (after component has been initialized)
+=====================================================
+
+// because of preload = async we have to use the attachInit event
+sap.ui.getCore().attachInit(function() {
+  sap.ui.require(["sap/m/Shell","sap/ui/core/ComponentContainer"], function(Shell, ComponentContainer, ModulePreload) {
+
+    var oCompContainer = new ComponentContainer({
+        height: "100%"
+    });
+
+    // initialize the UI component with async property
+    var oComponent = sap.ui.component({
+        async: true,
+        manifestFirst: true,
+        name: "de.tammenit.ui5.homepage"
+    }).then(function(oComponent){
+        oCompContainer.setComponent(oComponent);
+----------------------------------------------->
+    new MyModulePreload().preloadModule("sap/ui/thirdparty", "/zyngascroll.js", false, "text");
+    new MyModulePreload().preloadModule("sap/ui/core", "/cldr/de.json", true, "json");
+    new MyModulePreload().preloadModule("sap/ui/core", "/cldr/en.json", true, "json");
+    new MyModulePreload().preloadModule("sap/uxap", "/i18n/i18n.properties", false, "text");          
+    new MyModulePreload().preloadModule("sap/uxap", "/i18n/i18n_de.properties", false, "text");          
+    new MyModulePreload().preloadModule("sap/uxap", "/i18n/i18n_en.properties", false, "text");          
+    new MyModulePreload().preloadModule("", "/sap-ui-version.json", true, "json");
+<------------------------------------------------
+    });
+
+    new Shell({
+        showLogout:false,
+        app: oCompContainer
+    }).placeAt("content");
+    
+    
+  });
+});
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Finished. Test the app
+- Add to homescreen
+- Lighthouse: check PWA conformance level
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
